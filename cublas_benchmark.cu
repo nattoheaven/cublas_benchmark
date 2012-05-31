@@ -106,6 +106,33 @@ gemm<cuDoubleComplex>(cublasHandle_t handle, int m, int n, int k,
                                &alpha, a, lda, b, ldb, &beta, c, ldc));
 }
 
+template<typename T> double
+calc_gflops(int m, int n, int k, float ms);
+
+template<> double
+calc_gflops<float>(int m, int n, int k, float ms)
+{
+  return 2.0 * m * n * k / ms * 1.0e-6;
+}
+
+template<> double
+calc_gflops<double>(int m, int n, int k, float ms)
+{
+  return 2.0 * m * n * k / ms * 1.0e-6;
+}
+
+template<> double
+calc_gflops<cuComplex>(int m, int n, int k, float ms)
+{
+  return 8.0 * m * n * k / ms * 1.0e-6;
+}
+
+template<> double
+calc_gflops<cuDoubleComplex>(int m, int n, int k, float ms)
+{
+  return 8.0 * m * n * k / ms * 1.0e-6;
+}
+
 template<typename T> void
 benchmark(int m, int n, int k,
           int ldamin, int ldamax, int ldastep,
@@ -141,7 +168,7 @@ benchmark(int m, int n, int k,
         CUDA_SAFE_CALL(cudaEventSynchronize(end));
         float ms;
         CUDA_SAFE_CALL(cudaEventElapsedTime(&ms, start, end));
-        double gflops = 2.0 * m * n * k / ms * 1.0e-6;
+        double gflops = calc_gflops<T>(m, n, k, ms);
         printf("%d\t%d\t%d\t%.6f\t%.6f\n", lda, ldb, ldc, ms, gflops);
       }
     }
